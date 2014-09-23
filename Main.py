@@ -1,12 +1,14 @@
-###********************************************************************************###
-  # __author__ = 'sid'                                                             #
-  # This program is written as part of the Natural Language Processing Home Work 1 #
-  # @copyright: Sudarshan Sudarshan (Sid)                                          #
+# ##********************************************************************************###
+# __author__ = 'sid'                                                             #
+# This program is written as part of the Natural Language Processing Home Work 1 #
+# @copyright: Sudarshan Sudarshan (Sid)                                          #
 ###********************************************************************************###
 
 import nltk
+import time
 
 class NLPAssignment:
+    # Function to tokenize the file and create the <unigram: count>, <bigram: count> and total no of tokens
 
     def tokenization(self, fpath):
 
@@ -55,6 +57,8 @@ class NLPAssignment:
 
         return uni_bigrams
 
+    # Function to calculate the Unigram probability
+
     def Unigram_Probability(self, unigrams, No_of_Words):
 
         # A dictionary to store the <unigram: probability>
@@ -66,13 +70,7 @@ class NLPAssignment:
 
         return unigram_probability
 
-        # test
-        # sum = 0.0
-        # for key, prob in unigram_probability.items():
-        # # sum += prob
-        #     print str(key) + " " + str(prob)
-        # # print unigram_probability
-        # # print sum
+    # Function to calculate the Bigram Probability
 
     def Bigram_Probability(self, unigrams, bigrams, discount_factor):
 
@@ -97,59 +95,44 @@ class NLPAssignment:
             else:
                 bigram_probability[word] = (count / float(unigrams[word.split(" ")[0]])) * discount_factor
 
-        # test
-        # sum = 0.0
-        # for key, prob in bigram_probability.items():
-        #     print key, prob
-        #     sum += prob
-        #     # print str(key) + " " + str(prob)
-        # # print unigram_probability
-        # print sum
-
         return bigram_probability
+
+    # Function to calculate Backoff Weights
 
     def BackOffCalculation(self, unigrams, bigrams, unigram_probability, bigram_probability):
 
-        backoffCoefficients = {}
+        # A dictionary to store <word: backoff_wgt>
+        backoffWgts = {}
 
+        # for each bigram (unigram + unigram) check if there is a bigram
         for unig in unigrams:
-            probSumGT = 0.0
-            probSumNonGT = 0.0
-            probDenom = 0.0
-            for unig1 in unigrams:
-                newWord = unig + " " + unig1
+
+            probSumGT = 0.0  # To store the probability of bigrams obtained from GT
+            probSumNonGT = 0.0  # To store the probability of bigrams obtained from Non-GT
+            probDenom = 0.0  # To store the probability of current word present in bigrams
+
+            for unigram in unigrams:
+                newWord = unig + " " + unigram
                 if newWord in bigrams:
                     if bigrams[newWord] == 1:
                         probSumGT += bigram_probability[newWord]
                     else:
                         probSumNonGT += bigram_probability[newWord]
-                    probDenom += unigram_probability[unig1]
+                    probDenom += unigram_probability[unigram]
 
-            backoffCoefficients[unig] = (1 - (probSumGT + probSumNonGT)) / (1 - probDenom)
+            backoffWgts[unig] = (1 - (probSumGT + probSumNonGT)) / (1 - probDenom)
 
+        return backoffWgts
 
-        # for bigram, count in bigrams.items():
-        #     history = bigram.split(" ")[0]
-        #
-        #     probSumGT = 0.0
-        #     probSumNonGT = 0.0
-        #     probDenom = 0.0
-        #     for unig in unigrams:
-        #         newWord = history + " " + unig
-        #         if newWord in bigrams:
-        #             if bigrams[newWord] == 1:
-        #                 probSumGT += bigram_probability[newWord]
-        #             else:
-        #                 probSumNonGT += bigram_probability[newWord]
-        #             probDenom += unigram_probability[unig]
-
-        for key, value in backoffCoefficients.items():
-            print key, value
 
 if __name__ == "__main__":
 
     # Get the file path or file name
     fpath = raw_input('Enter the file path: ')
+
+    # Timer to get the execution time
+    start_time = time.time()
+
     if len(fpath) > 0:
         call = NLPAssignment()
         call.tokenization(fpath)
@@ -161,9 +144,13 @@ if __name__ == "__main__":
         # list containing unigrams (dictionary), bigrams (dictionary) and No_of_tokens (int) will be returned
         uni_bigrams = call.tokenization(fpath)
 
+        print "Successfully extracted unigrams and bigrams....."
+
         # call the function to calculate the probability of unigrams.
         # Dictionary containing <unigram: probability> will be returned
         unigram_probability = call.Unigram_Probability(uni_bigrams[0], uni_bigrams[2])
+
+        print "Successfully calculated unigram Probability....."
 
         # call the function to calculate the probability of bigrams.
         # Dictionary containing <unigram: probability> will be returned
@@ -171,9 +158,31 @@ if __name__ == "__main__":
         discount_factor = 0.99
         bigram_probability = call.Bigram_Probability(uni_bigrams[0], uni_bigrams[1], discount_factor)
 
-        # call the function to calculate the alpha(h), that is the back-off co-efficient
-        # back_off_coefficient = \
-        call.BackOffCalculation(uni_bigrams[0], uni_bigrams[1], unigram_probability, bigram_probability)
+        print "Successfully calculated bigram Probability....."
+
+        # call the function to calculate the alpha(h), that is the back-off wghts
+        backoff_wgts = call.BackOffCalculation(uni_bigrams[0], uni_bigrams[1], unigram_probability, bigram_probability)
+
+        print "Successfully calculated backoff weights for Unigrams....."
+
+        # Store the Unigrams
+        unigramFile = open("unigram_LM", "w")
+        for unigram in uni_bigrams[0]:
+            unigramFile.write(
+                str(unigram_probability[unigram]) + "\t" + str(unigram) + "\t" + str(backoff_wgts[unigram]) + "\n")
+
+        unigramFile.close()
+
+        # Store the bigrams
+        bigramFile = open("bigram_LM", "w")
+        for bigram in uni_bigrams[1]:
+            bigramFile.write(str(bigram_probability[bigram]) + "\t" + str(bigram) + "\n")
+
+        bigramFile.close()
+
+        print "Successfully stored Language Model in files <Unigram_LM> and <bigram_LM>....."
+
+        print "\n--- %s seconds ---" % (time.time() - start_time)
 
     else:  # If file path is not valid
         print "Invalid file path"
