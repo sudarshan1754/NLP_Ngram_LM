@@ -1,13 +1,13 @@
-__author__ = 'sid'
-"""
-This program is written as part of the Natural Language Processing Home Work 1
-@Author: Sudarshan Sudarshan (Sid)
-"""
+###********************************************************************************###
+  # __author__ = 'sid'                                                             #
+  # This program is written as part of the Natural Language Processing Home Work 1 #
+  # @copyright: Sudarshan Sudarshan (Sid)                                          #
+###********************************************************************************###
 
 import nltk
 
-
 class NLPAssignment:
+
     def tokenization(self, fpath):
 
         # list for unigrams and bigrams and the total number of tokens (N)
@@ -100,12 +100,51 @@ class NLPAssignment:
         # test
         # sum = 0.0
         # for key, prob in bigram_probability.items():
+        #     print key, prob
         #     sum += prob
         #     # print str(key) + " " + str(prob)
         # # print unigram_probability
         # print sum
 
         return bigram_probability
+
+    def BackOffCalculation(self, unigrams, bigrams, unigram_probability, bigram_probability):
+
+        backoffCoefficients = {}
+
+        for unig in unigrams:
+            probSumGT = 0.0
+            probSumNonGT = 0.0
+            probDenom = 0.0
+            for unig1 in unigrams:
+                newWord = unig + " " + unig1
+                if newWord in bigrams:
+                    if bigrams[newWord] == 1:
+                        probSumGT += bigram_probability[newWord]
+                    else:
+                        probSumNonGT += bigram_probability[newWord]
+                    probDenom += unigram_probability[unig1]
+
+            backoffCoefficients[unig] = (1 - (probSumGT + probSumNonGT)) / (1 - probDenom)
+
+
+        # for bigram, count in bigrams.items():
+        #     history = bigram.split(" ")[0]
+        #
+        #     probSumGT = 0.0
+        #     probSumNonGT = 0.0
+        #     probDenom = 0.0
+        #     for unig in unigrams:
+        #         newWord = history + " " + unig
+        #         if newWord in bigrams:
+        #             if bigrams[newWord] == 1:
+        #                 probSumGT += bigram_probability[newWord]
+        #             else:
+        #                 probSumNonGT += bigram_probability[newWord]
+        #             probDenom += unigram_probability[unig]
+
+        for key, value in backoffCoefficients.items():
+            print key, value
 
 if __name__ == "__main__":
 
@@ -132,7 +171,9 @@ if __name__ == "__main__":
         discount_factor = 0.99
         bigram_probability = call.Bigram_Probability(uni_bigrams[0], uni_bigrams[1], discount_factor)
 
-        # print bigram_probability
+        # call the function to calculate the alpha(h), that is the back-off co-efficient
+        # back_off_coefficient = \
+        call.BackOffCalculation(uni_bigrams[0], uni_bigrams[1], unigram_probability, bigram_probability)
 
     else:  # If file path is not valid
         print "Invalid file path"
