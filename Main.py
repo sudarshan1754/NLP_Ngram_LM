@@ -1,7 +1,7 @@
-# ##********************************************************************************###
-# __author__ = 'sid'                                                             #
-# This program is written as part of the Natural Language Processing Home Work 1 #
-# @copyright: Sudarshan Sudarshan (Sid)                                          #
+###********************************************************************************###
+  # __author__ = 'sid'                                                             #
+  # This program is written as part of the Natural Language Processing Home Work 1 #
+  # @copyright: Sudarshan Sudarshan (Sid)                                          #
 ###********************************************************************************###
 
 import nltk
@@ -15,16 +15,16 @@ class NLPAssignment:
         # list for unigrams and bigrams and the total number of tokens (N)
         uni_bigrams = []
 
-        # Store the < word: frequency> in dictonary
+        # Store the < word: frequency> in dictionary
         word_frequency_unigrams = {}
         word_frequency_bigrams = {}
 
-        # A variable to stores the totalwordcount
+        # A variable to store the total word count
         No_of_Words = 0
 
 
         # open the file and read the contents of the file line by line and then create a list of all tokens
-        # Once the list has been created, for each token in the list count the no. of occurences of that token
+        # Once the list has been created, for each token in the list count the no. of occurrences of that token
         # and store this in the dictionary data structure
 
         file_content = open(fpath)
@@ -166,21 +166,34 @@ if __name__ == "__main__":
         print "Successfully calculated backoff weights for Unigrams....."
 
         # Store the Unigrams
-        unigramFile = open("unigram_LM", "w")
+        # unigramFile = open("unigram_LM", "w")
+        # for unigram in uni_bigrams[0]:
+        #     unigramFile.write(
+        #         str(unigram_probability[unigram]) + "\t" + str(unigram) + "\t" + str(backoff_wgts[unigram]) + "\n")
+        #
+        # unigramFile.close()
+        #
+        # # Store the bigrams
+        # bigramFile = open("bigram_LM", "w")
+        # for bigram in uni_bigrams[1]:
+        #     bigramFile.write(str(bigram_probability[bigram]) + "\t" + str(bigram) + "\n")
+        #
+        # bigramFile.close()
+
+        # To store the Unigrams and bigrams
+        LM_file = open("Language_Model", "w")
+        LM_file.write("unigrams:\n")
         for unigram in uni_bigrams[0]:
-            unigramFile.write(
+            LM_file.write(
                 str(unigram_probability[unigram]) + "\t" + str(unigram) + "\t" + str(backoff_wgts[unigram]) + "\n")
 
-        unigramFile.close()
-
-        # Store the bigrams
-        bigramFile = open("bigram_LM", "w")
+        LM_file.write("\nbigrams:\n")
         for bigram in uni_bigrams[1]:
-            bigramFile.write(str(bigram_probability[bigram]) + "\t" + str(bigram) + "\n")
+            LM_file.write(str(bigram_probability[bigram]) + "\t" + str(bigram) + "\n")
 
-        bigramFile.close()
+        LM_file.close()
 
-        print "Successfully stored Language Model in files <Unigram_LM> and <bigram_LM>....."
+        print "Successfully stored Language Model in file 'Language_Model'....."
 
         print "\n--- %s seconds ---" % (time.time() - start_time)
 
