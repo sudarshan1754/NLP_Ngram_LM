@@ -1,12 +1,13 @@
-# ##********************************************************************************###
-# __author__ = 'sid'                                                             #
-# This program is written as part of the Natural Language Processing Home Work 1 #
-# @copyright: Sudarshan Sudarshan (Sid)                                          #
-# ##********************************************************************************###
+###********************************************************************************###
+  # __author__ = 'sid'                                                             #
+  # This program is written as part of the Natural Language Processing Home Work 1 #
+  # @copyright: Sudarshan Sudarshan (Sid)                                          #
+###********************************************************************************###
 
 import nltk
 import time
 import math
+import sys
 
 
 class NLPAssignmentTraining:
@@ -197,61 +198,71 @@ class NLPAssignmentTesting():
 
 if __name__ == "__main__":
 
-    # Get the file path or file name
-    fpath = raw_input('Enter the file path: ')
+    print "\n-------------------------Welcome-------------------------\n"
+    print "1. Train the Model\n2. Test the Language Model on a file\n3. Exit\n\nEnter your choice:"
+    option = raw_input()
 
-    # Timer to get the execution time
-    start_time = time.time()
+    if int(option) == 1:
 
-    if len(fpath) > 0:
-        call = NLPAssignmentTraining()
-        call.tokenization(fpath)
+        # Get the file path or file name
+        fpath = raw_input('Enter the train file path: ')
 
-        # list for unigrams (index= 0) and bigrams (index= 1) and the total number (index= 2)of tokens (N)
-        uni_bigrams = []
+        # Timer to get the execution time
+        start_time = time.time()
 
-        # call the function to calculate the wordcount of unigrams and bigrams.
-        # list containing unigrams (dictionary), bigrams (dictionary) and No_of_tokens (int) will be returned
-        uni_bigrams = call.tokenization(fpath)
+        if len(fpath) > 0:
+            call = NLPAssignmentTraining()
+            call.tokenization(fpath)
 
-        print "Successfully extracted unigrams and bigrams....."
+            # list for unigrams (index= 0) and bigrams (index= 1) and the total number (index= 2)of tokens (N)
+            uni_bigrams = []
 
-        # call the function to calculate the probability of unigrams.
-        # Dictionary containing <unigram: probability> will be returned
-        unigram_probability = call.Unigram_Probability(uni_bigrams[0], uni_bigrams[2])
+            # call the function to calculate the wordcount of unigrams and bigrams.
+            # list containing unigrams (dictionary), bigrams (dictionary) and No_of_tokens (int) will be returned
+            uni_bigrams = call.tokenization(fpath)
 
-        print "Successfully calculated unigram Probability....."
+            print "Successfully extracted unigrams and bigrams....."
 
-        # call the function to calculate the probability of bigrams.
-        # Dictionary containing <unigram: probability> will be returned
-        # Also multiply each bigram probability the discount factor
-        discount_factor = 0.99
-        bigram_probability = call.Bigram_Probability(uni_bigrams[0], uni_bigrams[1], discount_factor)
+            # call the function to calculate the probability of unigrams.
+            # Dictionary containing <unigram: probability> will be returned
+            unigram_probability = call.Unigram_Probability(uni_bigrams[0], uni_bigrams[2])
 
-        print "Successfully calculated bigram Probability....."
+            print "Successfully calculated unigram Probability....."
 
-        # call the function to calculate the alpha(h), that is the back-off wghts
-        backoff_wgts = call.BackOffCalculation(uni_bigrams[0], uni_bigrams[1], unigram_probability, bigram_probability)
+            # call the function to calculate the probability of bigrams.
+            # Dictionary containing <unigram: probability> will be returned
+            # Also multiply each bigram probability the discount factor
+            discount_factor = 0.99
+            bigram_probability = call.Bigram_Probability(uni_bigrams[0], uni_bigrams[1], discount_factor)
 
-        print "Successfully calculated backoff weights for Unigrams....."
+            print "Successfully calculated bigram Probability....."
 
-        # To store the Unigrams and bigrams
-        LM_file = open("Language_Model", "w")
-        LM_file.write("unigrams:\n")
-        for unigram in uni_bigrams[0]:
-            LM_file.write(
-                str(unigram_probability[unigram]) + "\t" + str(unigram) + "\t" + str(backoff_wgts[unigram]) + "\n")
+            # call the function to calculate the alpha(h), that is the back-off wghts
+            backoff_wgts = call.BackOffCalculation(uni_bigrams[0], uni_bigrams[1], unigram_probability, bigram_probability)
 
-        LM_file.write("\nbigrams:\n")
-        for bigram in uni_bigrams[1]:
-            LM_file.write(str(bigram_probability[bigram]) + "\t" + str(bigram) + "\n")
+            print "Successfully calculated backoff weights for Unigrams....."
 
-        LM_file.close()
+            # To store the Unigrams and bigrams
+            LM_file = open("Language_Model", "w")
+            LM_file.write("unigrams:\n")
+            for unigram in uni_bigrams[0]:
+                LM_file.write(
+                    str(unigram_probability[unigram]) + "\t" + str(unigram) + "\t" + str(backoff_wgts[unigram]) + "\n")
 
-        print "Successfully stored Language Model in file 'Language_Model'....."
+            LM_file.write("\nbigrams:\n")
+            for bigram in uni_bigrams[1]:
+                LM_file.write(str(bigram_probability[bigram]) + "\t" + str(bigram) + "\n")
 
-        print "\n--- %s seconds ---" % (time.time() - start_time)
+            LM_file.close()
 
+            print "Successfully stored Language Model in file 'Language_Model'....."
+
+            print "\n--- %s seconds ---" % (time.time() - start_time)
+
+        else:  # If file path is not valid
+            print "Invalid file path"
+
+    elif int(option) == 2:
         # Testing
         test = NLPAssignmentTesting()
 
@@ -262,7 +273,7 @@ if __name__ == "__main__":
         lm_model = test.GetLanguageModel()
 
         # Get the name/ path of testing file
-        print "\nEnter the test file:"
+        print "\nEnter the test file: "
         test_file = raw_input()
 
         if len(test_file) > 0:
@@ -273,8 +284,13 @@ if __name__ == "__main__":
             perplexity = test.CalculatePreplexity(lm_model[0], lm_model[1], lm_model[2], test_bigrams[0], test_bigrams[1])
 
             print "The perplexity of the test file is: " + str(perplexity)
+        else:
+            print "Invalid file path"
 
-    else:  # If file path is not valid
-        print "Invalid file path"
+    elif int(option) == 3:
+        print "-------------------------Good Bye-------------------------"
+        sys.exit()
+
+
 
 
