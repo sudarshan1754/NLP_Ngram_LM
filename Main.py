@@ -1,13 +1,15 @@
-###********************************************************************************###
-  # __author__ = 'sid'                                                             #
-  # This program is written as part of the Natural Language Processing Home Work 1 #
-  # @copyright: Sudarshan Sudarshan (Sid)                                          #
-###********************************************************************************###
+# ##********************************************************************************###
+# __author__ = 'sid'                                                             #
+# This program is written as part of the Natural Language Processing Home Work 1 #
+# @copyright: Sudarshan Sudarshan (Sid)                                          #
+# ##********************************************************************************###
 
 import nltk
 import time
+import math
 
-class NLPAssignment:
+
+class NLPAssignmentTraining:
     # Function to tokenize the file and create the <unigram: count>, <bigram: count> and total no of tokens
 
     def tokenization(self, fpath):
@@ -29,7 +31,7 @@ class NLPAssignment:
 
         file_content = open(fpath)
         for line in file_content.readlines():
-            # tokens = []
+
             tokens = nltk.WhitespaceTokenizer().tokenize(line)
 
             for index, token in enumerate(tokens):  # Create the dictionary
@@ -66,7 +68,7 @@ class NLPAssignment:
 
         for word, count in unigrams.items():
             # Use MLE Estimation
-            unigram_probability[word] = count / float(No_of_Words)
+            unigram_probability[word] = math.log((count / float(No_of_Words)), 2)  # storing the log probabilities
 
         return unigram_probability
 
@@ -90,10 +92,13 @@ class NLPAssignment:
         for word, count in bigrams.items():
             # if count = 1, apply Good Turing and discounting factor
             if count == 1:
-                bigram_probability[word] = ((2 * (N2 / (float(N1)))) / unigrams[word.split(" ")[0]]) * discount_factor
+                bigram_probability[word] = math.log(
+                    (((2 * (N2 / (float(N1)))) / unigrams[word.split(" ")[0]]) * discount_factor),
+                    2)  # storing the log probabilities
             # if count > 1, apply basic MLE and discount factor
             else:
-                bigram_probability[word] = (count / float(unigrams[word.split(" ")[0]])) * discount_factor
+                bigram_probability[word] = math.log(((count / float(unigrams[word.split(" ")[0]])) * discount_factor),
+                                                    2)  # storing the log probabilities
 
         return bigram_probability
 
@@ -104,7 +109,7 @@ class NLPAssignment:
         # A dictionary to store <word: backoff_wgt>
         backoffWgts = {}
 
-        # for each bigram (unigram + unigram) check if there is a bigram
+        # for each bigram (unigram(h) + unigram(w)) check if there is a bigram
         for unig in unigrams:
 
             probSumGT = 0.0  # To store the probability of bigrams obtained from GT
@@ -125,6 +130,71 @@ class NLPAssignment:
         return backoffWgts
 
 
+class NLPAssignmentTesting():
+
+    def GetLanguageModel(self):
+
+        lm_content = open("Language_Model")
+
+        # To get Unigram, probability and backoffweight
+        unigram_probability = {}
+        unigram_backoffWgts = {}
+        bigram_probability = {}
+
+        for lNo, line in enumerate(lm_content.readlines()):
+            if line == "unigrams:\n" or line == "bigrams:\n" or line == "\n":  # ignore the headers and blank lines
+                pass
+            else:
+                if len(line.split("\t")) == 3:  # If unigram
+                    unigram_probability[line.split("\t")[1]] = float(
+                        line.split("\t")[0])  # Store the <unigram: probability>
+                    unigram_backoffWgts[line.split("\t")[1]] = float(
+                        line.split("\t")[2].rstrip('\n'))  # Store the <unigram: backoff_wgts>
+                elif len(line.split("\t")) == 2:  # If bigram
+                    bigram_probability[line.split("\t")[1].rstrip('\n')] = float(
+                        line.split("\t")[0])  # Store the <bigram: probability>
+
+        # A list to return all the values read from file
+        lm_model = [unigram_probability, unigram_backoffWgts, bigram_probability]
+
+        return lm_model
+
+    def GetTestTokens(self, test_file):
+
+        test_bigrams = {}
+        test_N = 0
+
+        test_file = open(test_file)
+        for line in test_file.readlines():
+            tokens = nltk.WhitespaceTokenizer().tokenize(line)
+            test_N += len(tokens)  # To get the number of tokens in test set
+
+            for index, token in enumerate(tokens):
+                # for bigrams
+                if index < len(tokens) - 1:
+                    if (tokens[index] + " " + tokens[index + 1]) in test_bigrams:
+                        test_bigrams[(tokens[index] + " " + tokens[index + 1])] += 1
+                    else:
+                        test_bigrams[(tokens[index] + " " + tokens[index + 1])] = 1
+
+        test = [test_bigrams, test_N]
+        return test
+
+    def CalculatePreplexity(self, unigram_probability, unigram_backoff, bigram_probability, test_bigrams, TestWordCount):
+
+        logSum = 0.0
+        for bigram in test_bigrams:
+            if bigram in bigram_probability:
+                logSum += (bigram_probability[bigram] * test_bigrams[bigram])
+            else:
+                # Do katz Smoothing P(w|h) = alpha(h) * P(w)
+                logSum += ((unigram_backoff[bigram.split(" ")[0]] * unigram_probability[bigram.split(" ")[1]]) * test_bigrams[bigram])
+
+        logProb = (-(logSum / TestWordCount))
+        perplexity = math.pow(2, logProb)
+
+        return perplexity
+
 if __name__ == "__main__":
 
     # Get the file path or file name
@@ -134,7 +204,7 @@ if __name__ == "__main__":
     start_time = time.time()
 
     if len(fpath) > 0:
-        call = NLPAssignment()
+        call = NLPAssignmentTraining()
         call.tokenization(fpath)
 
         # list for unigrams (index= 0) and bigrams (index= 1) and the total number (index= 2)of tokens (N)
@@ -165,21 +235,6 @@ if __name__ == "__main__":
 
         print "Successfully calculated backoff weights for Unigrams....."
 
-        # Store the Unigrams
-        # unigramFile = open("unigram_LM", "w")
-        # for unigram in uni_bigrams[0]:
-        #     unigramFile.write(
-        #         str(unigram_probability[unigram]) + "\t" + str(unigram) + "\t" + str(backoff_wgts[unigram]) + "\n")
-        #
-        # unigramFile.close()
-        #
-        # # Store the bigrams
-        # bigramFile = open("bigram_LM", "w")
-        # for bigram in uni_bigrams[1]:
-        #     bigramFile.write(str(bigram_probability[bigram]) + "\t" + str(bigram) + "\n")
-        #
-        # bigramFile.close()
-
         # To store the Unigrams and bigrams
         LM_file = open("Language_Model", "w")
         LM_file.write("unigrams:\n")
@@ -197,5 +252,29 @@ if __name__ == "__main__":
 
         print "\n--- %s seconds ---" % (time.time() - start_time)
 
+        # Testing
+        test = NLPAssignmentTesting()
+
+        # To create a 3 different dictionaries and store it in a list
+        # [0] <unigram: probability>
+        # [1] <unigram: backoffwgt>
+        # [2] <bigram: probability>
+        lm_model = test.GetLanguageModel()
+
+        # Get the name/ path of testing file
+        print "\nEnter the test file:"
+        test_file = raw_input()
+
+        if len(test_file) > 0:
+            # Read the testing file anf get the <bigram: count> and N
+            test_bigrams = test.GetTestTokens(test_file)
+
+            # Calculate the perplexity
+            perplexity = test.CalculatePreplexity(lm_model[0], lm_model[1], lm_model[2], test_bigrams[0], test_bigrams[1])
+
+            print "The perplexity of the test file is: " + str(perplexity)
+
     else:  # If file path is not valid
         print "Invalid file path"
+
+
