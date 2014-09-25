@@ -86,7 +86,7 @@ class NLPAssignmentTraining:
             elif count == 2:
                 N2 += 1
 
-        # A dictionary to store the <unigram: probability>
+        # A dictionary to store the <bigram: probability>
         bigram_probability = {}
 
         # calculate the probability using MLE, Discount factor and Good turing
