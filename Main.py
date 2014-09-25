@@ -7,6 +7,7 @@
 import nltk
 import time
 import math
+discount_factor = 0.99
 
 
 class NLPAssignmentTraining:
@@ -154,7 +155,7 @@ class NLPAssignmentTraining:
             # if count > 1, apply basic MLE and discount factor
             else:
                 prob = math.log(((count / float(unigrams[word.split(" ")[0]])) * discount_factor),
-                                                    2)  # storing the log probabilities
+                                2)  # storing the log probabilities
 
             # To store the probability in the dictionary
             bigram_probability[word] = prob
@@ -178,7 +179,6 @@ class NLPAssignmentTraining:
 
 
 class NLPAssignmentTesting():
-
     def GetLanguageModel(self):
 
         lm_content = open("Language_Model")
@@ -227,7 +227,8 @@ class NLPAssignmentTesting():
         test = [test_bigrams, test_N]
         return test
 
-    def CalculatePreplexity(self, unigram_probability, unigram_backoff, bigram_probability, test_bigrams, TestWordCount):
+    def CalculatePreplexity(self, unigram_probability, unigram_backoff, bigram_probability, test_bigrams,
+                            TestWordCount):
 
         logSum = 0.0
         for bigram in test_bigrams:
@@ -235,12 +236,15 @@ class NLPAssignmentTesting():
                 logSum += (bigram_probability[bigram] * test_bigrams[bigram])
             else:
                 # Do katz Smoothing P(w|h) = alpha(h) * P(w)
-                logSum += ((unigram_backoff[bigram.split(" ")[0]] * unigram_probability[bigram.split(" ")[1]]) * test_bigrams[bigram])
+                logSum += (
+                (unigram_backoff[bigram.split(" ")[0]] * unigram_probability[bigram.split(" ")[1]]) * test_bigrams[
+                    bigram])
 
         logProb = (-(logSum / TestWordCount))
         perplexity = math.pow(2, logProb)
 
         return perplexity
+
 
 if __name__ == "__main__":
 
@@ -281,7 +285,7 @@ if __name__ == "__main__":
                 # call the function to calculate the probability of bigrams.
                 # Dictionary containing <unigram: probability> will be returned
                 # Also multiply each bigram probability the discount factor
-                discount_factor = 0.99
+                # discount_factor = 0.99
                 # bigram_probability = call.Bigram_Probability(uni_bigrams[0], uni_bigrams[1], discount_factor)
                 # print "Successfully calculated bigram Probability....."
 
@@ -291,9 +295,13 @@ if __name__ == "__main__":
 
                 # Added the following code
                 # __begin__
-                bi_bf = call.Bigram_Probability_And_BackOff(uni_bigrams[0], uni_bigrams[1], discount_factor, unigram_probability)
+                # Call a function to calulate the bigram probability and also get the Nr and Dr of alpha_h
+                bi_bf = call.Bigram_Probability_And_BackOff(uni_bigrams[0], uni_bigrams[1], discount_factor,
+                                                            unigram_probability)
                 backoff_wgts = {}
                 bigram_probability = bi_bf[0]
+
+                # print len(bi_bf[0]), len(bi_bf[1]), len(bi_bf[2])
 
                 # Calculate the backoff_wgts
                 for word in bi_bf[1]:
@@ -309,7 +317,7 @@ if __name__ == "__main__":
                     # __begin__
                     # if there ar no bigrams that occur once
                     if unigram not in backoff_wgts:
-                        alpha_h = 0.01    # 1 - discount_factor
+                        alpha_h = 1 - discount_factor  # 1 - discount_factor
                     else:
                         alpha_h = backoff_wgts[unigram]
                     # __end__
@@ -348,11 +356,12 @@ if __name__ == "__main__":
                 test_bigrams = test.GetTestTokens(test_file)
 
                 # Calculate the perplexity
-                perplexity = test.CalculatePreplexity(lm_model[0], lm_model[1], lm_model[2], test_bigrams[0], test_bigrams[1])
+                perplexity = test.CalculatePreplexity(lm_model[0], lm_model[1], lm_model[2], test_bigrams[0],
+                                                      test_bigrams[1])
 
-                print "\n_____________________________________________________________\n"
+                print "\n___________________________________________________________\n"
                 print "\tThe perplexity of the test file is: " + str(perplexity)
-                print "_____________________________________________________________\n"
+                print "___________________________________________________________\n"
             else:
                 print "Invalid file path"
 
