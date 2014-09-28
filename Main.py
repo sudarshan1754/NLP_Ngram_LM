@@ -7,12 +7,13 @@
 import nltk
 import time
 import math
+
 discount_factor = 0.99
 
 
 class NLPAssignmentTraining:
-    # Function to tokenize the file and create the <unigram: count>, <bigram: count> and total no of tokens
 
+    # Function to tokenize the file and create the <unigram: count>, <bigram: count> and total no of tokens
     def tokenization(self, fpath):
 
         # list for unigrams and bigrams and the total number of tokens (N)
@@ -24,6 +25,9 @@ class NLPAssignmentTraining:
 
         # A variable to store the total word count
         No_of_Words = 0
+
+        # To get the bigrams which occur once
+        SingletonsBigrams = {}
 
         # open the file and read the contents of the file line by line and then create a list of all tokens
         # Once the list has been created, for each token in the list count the no. of occurrences of that token
@@ -49,18 +53,26 @@ class NLPAssignmentTraining:
                 if index < len(tokens) - 1:
                     if (tokens[index] + " " + tokens[index + 1]) in word_frequency_bigrams:
                         word_frequency_bigrams[(tokens[index] + " " + tokens[index + 1])] += 1
+                        if (tokens[index] + " " + tokens[index + 1]) in SingletonsBigrams:
+                            del SingletonsBigrams[(tokens[index] + " " + tokens[index + 1])]
                     else:
                         word_frequency_bigrams[(tokens[index] + " " + tokens[index + 1])] = 1
+                        SingletonsBigrams[(tokens[index] + " " + tokens[index + 1])] = 1
+
+        # To get only the history words
+        SingleTons = {}
+        for bigram, count in SingletonsBigrams.iteritems():
+            SingleTons[bigram.split(" ")[0]] = count
 
         # Store the Unigrams dictionary, bigrams dictionary and No of tokens (N) in a list so that it can be returned
         uni_bigrams.append(word_frequency_unigrams)
         uni_bigrams.append(word_frequency_bigrams)
         uni_bigrams.append(No_of_Words)
+        uni_bigrams.append(SingleTons)
 
         return uni_bigrams
 
     # Function to calculate the Unigram probability
-
     def Unigram_Probability(self, unigrams, No_of_Words):
 
         # A dictionary to store the <unigram: probability>
@@ -68,69 +80,13 @@ class NLPAssignmentTraining:
 
         for word, count in unigrams.items():
             # Use MLE Estimation
-            unigram_probability[word] = math.log((count / float(No_of_Words)), 2)  # storing the log probabilities
+            unigram_probability[word] = (count / float(No_of_Words))  # storing the log probabilities
 
         return unigram_probability
 
-    # Function to calculate the Bigram Probability
-
-    # def Bigram_Probability(self, unigrams, bigrams, discount_factor):
-    #
-    #     # get the count of N1 (No. of bigrams has occuring once) and N2 (No. of bigrams has occuring twice)
-    #     N1 = 0
-    #     N2 = 0
-    #     for word, count in bigrams.items():
-    #         if count == 1:
-    #             N1 += 1
-    #         elif count == 2:
-    #             N2 += 1
-    #
-    #     # A dictionary to store the <bigram: probability>
-    #     bigram_probability = {}
-    #
-    #     # calculate the probability using MLE, Discount factor and Good turing
-    #     for word, count in bigrams.items():
-    #         # if count = 1, apply Good Turing and discounting factor
-    #         if count == 1:
-    #             bigram_probability[word] = math.log(
-    #                 (((2 * (N2 / (float(N1)))) / unigrams[word.split(" ")[0]]) * discount_factor),
-    #                 2)  # storing the log probabilities
-    #         # if count > 1, apply basic MLE and discount factor
-    #         else:
-    #             bigram_probability[word] = math.log(((count / float(unigrams[word.split(" ")[0]])) * discount_factor),
-    #                                                 2)  # storing the log probabilities
-    #
-    #     return bigram_probability
-    #
-    # # Function to calculate Backoff Weights
-    #
-    # def BackOffCalculation(self, unigrams, bigrams, unigram_probability, bigram_probability):
-    #
-    #     # A dictionary to store <word: backoff_wgt>
-    #     backoffWgts = {}
-    #
-    #     # for each bigram (unigram(h) + unigram(w)) check if there is a bigram
-    #     for unig in unigrams:
-    #
-    #         probSumGT = 0.0  # To store the probability of bigrams obtained from GT
-    #         probSumNonGT = 0.0  # To store the probability of bigrams obtained from Non-GT
-    #         probDenom = 0.0  # To store the probability of current word present in bigrams
-    #
-    #         for unigram in unigrams:
-    #             newWord = unig + " " + unigram
-    #             if newWord in bigrams:
-    #                 if bigrams[newWord] == 1:
-    #                     probSumGT += bigram_probability[newWord]
-    #                 else:
-    #                     probSumNonGT += bigram_probability[newWord]
-    #                 probDenom += unigram_probability[unigram]
-    #
-    #         backoffWgts[unig] = (1 - (probSumGT + probSumNonGT)) / (1 - probDenom)
-    #
-    #     return backoffWgts
 
     # New function which combines Bigram calculation and backoff calculation
-    def Bigram_Probability_And_BackOff(self, unigrams, bigrams, discount_factor, unigram_probability):
+    def Bigram_Probability_And_BackOff(self, unigrams, bigrams, discount_factor, unigram_probability, SingletonWords):
 
         # get the count of N1 (No. of bigrams has occuring once) and N2 (No. of bigrams has occuring twice)
         N1 = 0
@@ -145,17 +101,20 @@ class NLPAssignmentTraining:
         bigram_probability = {}
         bfNr = {}
         bfDr = {}
+
         # calculate the probability using MLE, Discount factor and Good turing
         for word, count in bigrams.items():
+            disc = 1
+            # If there are no Singleton Bigrams
+            if word.split(" ")[0] not in SingletonWords:
+                disc = 0.99
+
             # if count = 1, apply Good Turing and discounting factor
             if count == 1:
-                prob = math.log(
-                    (((2 * (N2 / (float(N1)))) / unigrams[word.split(" ")[0]]) * discount_factor),
-                    2)  # storing the log probabilities
+                prob = ((2 * (N2 / (float(N1)))) / unigrams[word.split(" ")[0]]) * disc
             # if count > 1, apply basic MLE and discount factor
             else:
-                prob = math.log(((count / float(unigrams[word.split(" ")[0]])) * discount_factor),
-                                2)  # storing the log probabilities
+                prob = (count / float(unigrams[word.split(" ")[0]])) * disc
 
             # To store the probability in the dictionary
             bigram_probability[word] = prob
@@ -179,9 +138,9 @@ class NLPAssignmentTraining:
 
 
 class NLPAssignmentTesting():
-    def GetLanguageModel(self):
+    def GetLanguageModel(self, lm):
 
-        lm_content = open("Language_Model")
+        lm_content = open(lm)
 
         # To get Unigram, probability and backoffweight
         unigram_probability = {}
@@ -237,8 +196,8 @@ class NLPAssignmentTesting():
             else:
                 # Do katz Smoothing P(w|h) = alpha(h) * P(w)
                 logSum += (
-                (unigram_backoff[bigram.split(" ")[0]] * unigram_probability[bigram.split(" ")[1]]) * test_bigrams[
-                    bigram])
+                    (unigram_backoff[bigram.split(" ")[0]] + unigram_probability[bigram.split(" ")[1]]) * test_bigrams[
+                        bigram])
 
         logProb = (-(logSum / TestWordCount))
         perplexity = math.pow(2, logProb)
@@ -252,20 +211,19 @@ if __name__ == "__main__":
 
     while True:
 
-        print "1. Train the Model\n2. Test the Language Model on a file\n3. Exit\n\nEnter your choice:"
-        option = raw_input()
+        option = raw_input('1. Train the Model\n2. Test the Language Model on a file\n3. Exit\n\nEnter your choice:')
 
         if int(option) == 1:
 
             # Get the file path or file name
             fpath = raw_input('Enter the train file path: ')
+            lmpath = raw_input('Enter the LM file name: ')
 
             # Timer to get the execution time
             start_time = time.time()
 
             if len(fpath) > 0:
                 call = NLPAssignmentTraining()
-                call.tokenization(fpath)
 
                 # list for unigrams (index= 0) and bigrams (index= 1) and the total number (index= 2)of tokens (N)
                 uni_bigrams = []
@@ -282,51 +240,33 @@ if __name__ == "__main__":
 
                 print "Successfully calculated unigram Probability....."
 
-                # call the function to calculate the probability of bigrams.
-                # Dictionary containing <unigram: probability> will be returned
-                # Also multiply each bigram probability the discount factor
-                # discount_factor = 0.99
-                # bigram_probability = call.Bigram_Probability(uni_bigrams[0], uni_bigrams[1], discount_factor)
-                # print "Successfully calculated bigram Probability....."
-
-                # call the function to calculate the alpha(h), that is the back-off wghts
-                # backoff_wgts = call.BackOffCalculation(uni_bigrams[0], uni_bigrams[1], unigram_probability, bigram_probability)
-
-
-                # Added the following code
-                # __begin__
                 # Call a function to calulate the bigram probability and also get the Nr and Dr of alpha_h
                 bi_bf = call.Bigram_Probability_And_BackOff(uni_bigrams[0], uni_bigrams[1], discount_factor,
-                                                            unigram_probability)
+                                                            unigram_probability, uni_bigrams[3])
                 backoff_wgts = {}
                 bigram_probability = bi_bf[0]
 
-                # print len(bi_bf[0]), len(bi_bf[1]), len(bi_bf[2])
-
-                # Calculate the backoff_wgts
                 for word in bi_bf[1]:
                     backoff_wgts[word] = bi_bf[1][word] / bi_bf[2][word]
-                # __end__
 
                 print "Successfully calculated bigram probability and backoff weights for Unigrams....."
 
                 # To store the Unigrams and bigrams
-                LM_file = open("Language_Model", "w")
+                LM_file = open(lmpath, "w")
                 LM_file.write("unigrams:\n")
-                for unigram in uni_bigrams[0]:
-                    # __begin__
-                    # if there ar no bigrams that occur once
-                    if unigram not in backoff_wgts:
-                        alpha_h = 1 - discount_factor  # 1 - discount_factor
+
+                for unigram in sorted(uni_bigrams[0]):
+                    if unigram == "</s>":
+                        bf = 0.0
                     else:
-                        alpha_h = backoff_wgts[unigram]
-                    # __end__
+                        bf = math.log(backoff_wgts[unigram], 2)
+
                     LM_file.write(
-                        str(unigram_probability[unigram]) + "\t" + str(unigram) + "\t" + str(alpha_h) + "\n")
+                        str(math.log(unigram_probability[unigram], 2)) + "\t" + str(unigram) + "\t" + str(bf) + "\n")
 
                 LM_file.write("\nbigrams:\n")
                 for bigram in uni_bigrams[1]:
-                    LM_file.write(str(bigram_probability[bigram]) + "\t" + str(bigram) + "\n")
+                    LM_file.write(str(math.log(bigram_probability[bigram], 2)) + "\t" + str(bigram) + "\n")
 
                 LM_file.close()
 
@@ -341,15 +281,15 @@ if __name__ == "__main__":
             # Testing
             test = NLPAssignmentTesting()
 
+            # Get the name/ path of lm and testing file
+            lm = raw_input('Enter the LM file name: ')
+            test_file = raw_input('Enter the test file: ')
+
             # To create a 3 different dictionaries and store it in a list
             # [0] <unigram: probability>
             # [1] <unigram: backoffwgt>
             # [2] <bigram: probability>
-            lm_model = test.GetLanguageModel()
-
-            # Get the name/ path of testing file
-            print "\nEnter the test file: "
-            test_file = raw_input()
+            lm_model = test.GetLanguageModel(lm)
 
             if len(test_file) > 0:
                 # Read the testing file anf get the <bigram: count> and N
