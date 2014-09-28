@@ -84,7 +84,7 @@ class NLPAssignmentTraining:
 
 
     # New function which combines Bigram calculation and backoff calculation
-    def Bigram_Probability_And_BackOff(self, unigrams, bigrams, discount_factor, unigram_probability, SingletonWords):
+    def Bigram_Probability_And_BackOff(self, unigrams, bigrams, unigram_probability, SingletonWords):
 
         # get the count of N1 (No. of bigrams has occuring once) and N2 (No. of bigrams has occuring twice)
         N1 = 0
@@ -239,7 +239,7 @@ if __name__ == "__main__":
                 print "Successfully calculated unigram Probability....."
 
                 # Call a function to calulate the bigram probability and also get the Nr and Dr of alpha_h
-                bi_bf = call.Bigram_Probability_And_BackOff(uni_bigrams[0], uni_bigrams[1], discount_factor,
+                bi_bf = call.Bigram_Probability_And_BackOff(uni_bigrams[0], uni_bigrams[1],
                                                             unigram_probability, uni_bigrams[3])
                 backoff_wgts = {}
                 bigram_probability = bi_bf[0]
