@@ -8,8 +8,6 @@ import nltk
 import time
 import math
 
-discount_factor = 0.99
-
 
 class NLPAssignmentTraining:
 
