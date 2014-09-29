@@ -1,6 +1,6 @@
 ###********************************************************************************###
   # __author__ = 'sid'                                                             #
-  # This README is written as part of the Natural Language Processing Home Work 1 #
+  # This README is written as part of the Natural Language Processing Home Work 1  #
   # @copyright: Sudarshan Sudarshan (Sid)                                          #
 ###********************************************************************************###
 
@@ -33,7 +33,7 @@ Execution:
     for the test file name. Once this is provided, the testing begins and the perplexity
     will be displayed in the terminal.
 
-    To exit the program enter 3.
+    To exit the program enter "3".
 
 ###********************************************************************************###
 
