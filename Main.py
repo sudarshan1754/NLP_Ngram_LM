@@ -268,7 +268,7 @@ if __name__ == "__main__":
 
                 LM_file.close()
 
-                print "Successfully stored Language Model in file 'Language_Model'....."
+                print "Successfully stored Language Model in file %s....." % lmpath
 
                 print "\n--- %s seconds ---\n" % (time.time() - start_time)
 
